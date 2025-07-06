@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 
 public enum Command {
 
@@ -41,7 +43,13 @@ public enum Command {
         @Override
         Path execute(Path path) {
 
-            // TODO implementar conforme enunciado
+            if(parameters.length < 2 || parameters[1].isBlank()){
+                throw new UnsupportedOperationException("Erro: nenhum arquivo informado.");
+            }
+
+            Path file = path.resolve(parameters[1]);
+
+            new FileReader().read(file);
 
             return path;
         }
@@ -56,9 +64,13 @@ public enum Command {
         @Override
         Path execute(Path path) {
 
-            // TODO implementar conforme enunciado
+            Path rootPath = Paths.get(Application.ROOT);
 
-            return path;
+            if(path.equals(rootPath)){
+                throw new UnsupportedOperationException("Você já está no diretório raiz");
+            }
+
+            return path.getParent();
         }
     },
     OPEN() {
@@ -78,16 +90,14 @@ public enum Command {
         @Override
         Path execute(Path path) {
 
-            if(parameters.length > 2){
-                System.out.println("Erro: diretório não informando.");
-                return path;
+            if(parameters.length < 2 || parameters[1].isBlank()){
+                throw new UnsupportedOperationException("Necessário informar o nome do diretório");
             }
 
             Path newPath = path.resolve(parameters[1]);
 
             if(!Files.isDirectory(newPath)){
-                System.out.println("Erro: diretório não encontrado");
-                return path;
+                throw new UnsupportedOperationException("Diretório não encontrado: " + parameters[1]);
             }
 
             return newPath;
@@ -110,7 +120,29 @@ public enum Command {
         @Override
         Path execute(Path path) {
 
-            // TODO implementar conforme enunciado
+            if(parameters.length < 2 || parameters[1].isBlank()){
+                throw new UnsupportedOperationException("Erro: arquivo ou diretório não informado.");
+            }
+
+            Path file = path.resolve(parameters[1]);
+
+            if(!Files.exists(file)){
+                throw new UnsupportedOperationException("Erro: arquivo ou diretório não informado.");
+            }
+
+            try{
+                BasicFileAttributeView view = Files.getFileAttributeView(file, BasicFileAttributeView.class);
+                BasicFileAttributes attrbts = view.readAttributes();
+
+                System.out.println("É diretório: " + attrbts.isDirectory());
+                System.out.println("Tamanho: " + "[" + attrbts.size() + "]");
+                System.out.println("Criação: " + attrbts.creationTime());
+                System.out.println("Ultimo acesso: " + attrbts.lastAccessTime());
+                System.out.println("Ultima modificação: " + attrbts.lastModifiedTime());
+            }
+            catch (IOException e){
+                throw new UnsupportedOperationException("Erro ao ler detalhes do arquivo: " + e.getMessage());
+            }
 
             return path;
         }
